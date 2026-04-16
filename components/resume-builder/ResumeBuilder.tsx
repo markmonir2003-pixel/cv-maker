@@ -28,14 +28,14 @@ export function ResumeBuilder() {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top Header Bar */}
-      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-20">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <FileText className="w-4 h-4 text-primary-foreground" />
+      <header className="flex items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-20">
+        <div className="flex items-center gap-2 md:gap-2.5">
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+            <FileText className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary-foreground" />
           </div>
-          <div>
-            <h1 className="text-sm font-bold leading-tight">AI Resume Builder</h1>
-            <p className="text-[10px] text-muted-foreground leading-tight hidden sm:block">
+          <div className="min-w-0">
+            <h1 className="text-xs md:text-sm font-bold leading-tight truncate">AI Resume Builder</h1>
+            <p className="text-[10px] text-muted-foreground leading-tight hidden md:block">
               Build & download your resume
             </p>
           </div>
@@ -50,7 +50,7 @@ export function ResumeBuilder() {
             className="md:hidden gap-1.5"
           >
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            {showPreview ? 'Edit' : 'Preview'}
+            {showPreview ? 'Make your CV' : 'Preview'}
           </Button>
 
           {/* Clear all data */}
@@ -72,7 +72,7 @@ export function ResumeBuilder() {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={clearAll}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  className="bg-red-600 text-white hover:bg-red-700"
                 >
                   Clear All
                 </AlertDialogAction>

@@ -5,7 +5,7 @@ import { useResume } from '@/contexts/ResumeContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MapPin, Briefcase, Linkedin, Globe } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Linkedin, Globe, Image as ImageIcon, FileBadge } from 'lucide-react';
 
 export function PersonalInfoForm() {
   const { data, updatePersonalInfo } = useResume();
@@ -17,6 +17,17 @@ export function PersonalInfoForm() {
     },
     [personalInfo, updatePersonalInfo]
   );
+
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, field: 'photo' | 'graduationCertificate') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      handleChange(field, reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, [handleChange]);
 
   return (
     <div className="space-y-4">
@@ -123,21 +134,41 @@ export function PersonalInfoForm() {
         />
       </div>
 
-      {/* Summary */}
-      <div className="space-y-1.5">
-        <Label htmlFor="summary" className="text-xs font-semibold">
-          Professional Summary
-        </Label>
-        <Textarea
-          id="summary"
-          value={personalInfo.summary}
-          onChange={e => handleChange('summary', e.target.value)}
-          placeholder="A brief overview of your professional background, key skills, and career goals…"
-          className="min-h-[96px] resize-none"
-        />
-        <p className="text-xs text-muted-foreground">
-          {personalInfo.summary.length} characters · Aim for 2–4 sentences.
-        </p>
+      {/* Uploads */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="photo" className="flex items-center gap-1.5 text-xs font-semibold">
+            <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+            Profile Photo <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="photo"
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileUpload(e, 'photo')}
+            className="cursor-pointer file:cursor-pointer"
+          />
+          {personalInfo.photo && (
+            <p className="text-[10px] text-green-600 font-medium">Photo uploaded successfully.</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="graduationCertificate" className="flex items-center gap-1.5 text-xs font-semibold">
+            <FileBadge className="w-3.5 h-3.5 text-muted-foreground" />
+            Graduation Certificate <span className="font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="graduationCertificate"
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileUpload(e, 'graduationCertificate')}
+            className="cursor-pointer file:cursor-pointer"
+          />
+          {personalInfo.graduationCertificate && (
+            <p className="text-[10px] text-green-600 font-medium">Certificate uploaded successfully.</p>
+          )}
+        </div>
       </div>
     </div>
   );

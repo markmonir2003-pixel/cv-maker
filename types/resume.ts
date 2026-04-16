@@ -6,7 +6,8 @@ export interface PersonalInfo {
   location: string;
   linkedin: string;
   website: string;
-  summary: string;
+  photo: string;
+  graduationCertificate: string;
 }
 
 export interface Experience {
@@ -25,13 +26,13 @@ export interface Education {
   degree: string;
   field: string;
   graduationDate: string;
-  gpa: string;
 }
 
 export interface Skill {
   id: string;
   name: string;
   proficiency: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  certificate: string;
 }
 
 export interface ResumeData {

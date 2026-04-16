@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useResume } from '@/contexts/ResumeContext';
 import { Button } from '@/components/ui/button';
 import { StepIndicator } from './StepIndicator';
 import { PersonalInfoForm } from './form/PersonalInfoForm';
@@ -18,21 +19,21 @@ const TOTAL_STEPS = 4;
 
 const formSteps = [
   { component: PersonalInfoForm, title: 'Personal Information' },
-  { component: ExperienceForm, title: 'Work Experience' },
   { component: EducationForm, title: 'Education' },
+  { component: ExperienceForm, title: 'Work Experience' },
   { component: SkillsForm, title: 'Skills' },
 ];
 
 export function FormSection({ onDownload }: FormSectionProps) {
-  const [currentStep, setCurrentStep] = useState(1);
+  const { currentStep, setCurrentStep } = useResume();
 
   const handleNext = useCallback(() => {
-    setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS));
-  }, []);
+    setCurrentStep(Math.min(currentStep + 1, TOTAL_STEPS));
+  }, [currentStep, setCurrentStep]);
 
   const handlePrevious = useCallback(() => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  }, []);
+    setCurrentStep(Math.max(currentStep - 1, 1));
+  }, [currentStep, setCurrentStep]);
 
   const CurrentForm = formSteps[currentStep - 1].component;
   const currentTitle = formSteps[currentStep - 1].title;

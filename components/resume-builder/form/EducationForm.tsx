@@ -18,7 +18,6 @@ export function EducationForm() {
       degree: '',
       field: '',
       graduationDate: '',
-      gpa: '',
     });
   }, [addEducation]);
 
@@ -98,8 +97,8 @@ export function EducationForm() {
             </div>
           </div>
 
-          {/* Graduation Date + GPA */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Graduation Date */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor={`graduationDate-${education.id}`} className="text-xs font-semibold">
                 Graduation Date
@@ -109,17 +108,6 @@ export function EducationForm() {
                 type="month"
                 value={education.graduationDate}
                 onChange={e => handleChange(education.id, 'graduationDate', e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`gpa-${education.id}`} className="text-xs font-semibold">
-                GPA <span className="font-normal text-muted-foreground">(optional)</span>
-              </Label>
-              <Input
-                id={`gpa-${education.id}`}
-                value={education.gpa}
-                onChange={e => handleChange(education.id, 'gpa', e.target.value)}
-                placeholder="3.8 / 4.0"
               />
             </div>
           </div>

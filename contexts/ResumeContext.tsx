@@ -20,7 +20,8 @@ const initialResumeData: ResumeData = {
     location: '',
     linkedin: '',
     website: '',
-    summary: '',
+    photo: '',
+    graduationCertificate: '',
   },
   experiences: [],
   educations: [],
@@ -56,6 +57,8 @@ interface ResumeContextType {
   addSkill: (skill: Omit<Skill, 'id'>) => void;
   updateSkill: (id: string, skill: Omit<Skill, 'id'>) => void;
   removeSkill: (id: string) => void;
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
   clearAll: () => void;
 }
 
@@ -63,19 +66,29 @@ const ResumeContext = createContext<ResumeContextType | undefined>(undefined);
 
 export function ResumeProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<ResumeData>(initialResumeData);
+  const [currentStep, setCurrentStep] = useState(1);
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate from localStorage on mount
   useEffect(() => {
-    setData(loadFromStorage());
+    const savedData = loadFromStorage();
+    setData(savedData);
+    
+    if (typeof window !== 'undefined') {
+      const savedStep = localStorage.getItem('resume-builder-step');
+      if (savedStep) {
+        setCurrentStep(parseInt(savedStep, 10));
+      }
+    }
     setHydrated(true);
   }, []);
 
-  // Persist to localStorage whenever data changes (after hydration)
+  // Persist to localStorage whenever data or step changes (after hydration)
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data, hydrated]);
+    localStorage.setItem('resume-builder-step', currentStep.toString());
+  }, [data, currentStep, hydrated]);
 
   const updatePersonalInfo = useCallback((info: PersonalInfo) => {
     setData(prev => ({ ...prev, personalInfo: info }));
@@ -181,6 +194,8 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
         addSkill,
         updateSkill,
         removeSkill,
+        currentStep,
+        setCurrentStep,
         clearAll,
       }}
     >

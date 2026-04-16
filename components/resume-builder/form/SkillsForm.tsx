@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus, Zap } from 'lucide-react';
+import { Trash2, Plus, Zap, FileBadge } from 'lucide-react';
 import { Skill } from '@/types/resume';
 
 const PROFICIENCY_LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
@@ -44,7 +44,7 @@ export function SkillsForm() {
   const { skills } = data;
 
   const handleAddSkill = useCallback(() => {
-    addSkill({ name: '', proficiency: 'intermediate' });
+    addSkill({ name: '', proficiency: 'intermediate', certificate: '' });
   }, [addSkill]);
 
   const handleChange = useCallback(
@@ -55,6 +55,17 @@ export function SkillsForm() {
     },
     [skills, updateSkill]
   );
+
+  const handleFileUpload = useCallback(async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      handleChange(id, 'certificate', reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }, [handleChange]);
 
   return (
     <div className="space-y-3">
@@ -69,54 +80,76 @@ export function SkillsForm() {
         {skills.map(skill => (
           <div
             key={skill.id}
-            className="flex gap-3 items-end border rounded-xl p-3 bg-muted/20 hover:bg-muted/30 transition-colors"
+            className="border rounded-xl p-4 space-y-3 bg-muted/20 hover:bg-muted/30 transition-colors"
           >
-            {/* Skill Name */}
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <Label htmlFor={`skill-name-${skill.id}`} className="text-xs font-semibold">
-                Skill
-              </Label>
-              <Input
-                id={`skill-name-${skill.id}`}
-                value={skill.name}
-                onChange={e => handleChange(skill.id, 'name', e.target.value)}
-                placeholder="e.g. React, Python…"
-              />
-            </div>
-
-            {/* Proficiency */}
-            <div className="w-36 space-y-1.5 shrink-0">
-              <div className="flex items-center justify-between">
-                <Label htmlFor={`proficiency-${skill.id}`} className="text-xs font-semibold">
-                  Level
+            <div className="flex gap-3 items-end">
+              {/* Skill Name */}
+              <div className="flex-1 min-w-0 space-y-1.5">
+                <Label htmlFor={`skill-name-${skill.id}`} className="text-xs font-semibold">
+                  Skill
                 </Label>
-                <ProficiencyBars level={skill.proficiency} />
+                <Input
+                  id={`skill-name-${skill.id}`}
+                  value={skill.name}
+                  onChange={e => handleChange(skill.id, 'name', e.target.value)}
+                  placeholder="e.g. React, Python…"
+                />
               </div>
-              <Select
-                value={skill.proficiency}
-                onValueChange={value => handleChange(skill.id, 'proficiency', value)}
+
+              {/* Proficiency */}
+              <div className="w-36 space-y-1.5 shrink-0">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`proficiency-${skill.id}`} className="text-xs font-semibold">
+                    Level
+                  </Label>
+                  <ProficiencyBars level={skill.proficiency} />
+                </div>
+                <Select
+                  value={skill.proficiency}
+                  onValueChange={value => handleChange(skill.id, 'proficiency', value as any)}
+                >
+                  <SelectTrigger id={`proficiency-${skill.id}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROFICIENCY_LEVELS.map(level => (
+                      <SelectItem key={level} value={level}>
+                        {proficiencyConfig[level].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Remove */}
+              <button
+                onClick={() => removeSkill(skill.id)}
+                className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors mb-0.5"
+                aria-label="Remove skill"
               >
-                <SelectTrigger id={`proficiency-${skill.id}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFICIENCY_LEVELS.map(level => (
-                    <SelectItem key={level} value={level}>
-                      {proficiencyConfig[level].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {/* Remove */}
-            <button
-              onClick={() => removeSkill(skill.id)}
-              className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors mb-0.5"
-              aria-label="Remove skill"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            {/* Certificate */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`certificate-${skill.id}`} className="flex items-center gap-1.5 text-xs font-semibold">
+                <FileBadge className="w-3.5 h-3.5 text-muted-foreground" />
+                Course Certificate <span className="font-normal text-muted-foreground">(optional, if accredited)</span>
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id={`certificate-${skill.id}`}
+                  type="file"
+                  accept="image/*"
+                  onChange={e => handleFileUpload(skill.id, e)}
+                  className="cursor-pointer file:cursor-pointer flex-1"
+                />
+                {skill.certificate && (
+                  <p className="text-[10px] text-green-600 font-medium shrink-0">Uploaded</p>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
