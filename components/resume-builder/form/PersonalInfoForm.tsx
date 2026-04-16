@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Mail, Phone, MapPin, Briefcase, Linkedin, Globe, Image as ImageIcon, FileBadge } from 'lucide-react';
+import { compressImage } from '@/lib/image-utils';
 
 export function PersonalInfoForm() {
   const { data, updatePersonalInfo } = useResume();
@@ -22,11 +23,12 @@ export function PersonalInfoForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      handleChange(field, reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImage(file);
+      handleChange(field, compressedBase64);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+    }
   }, [handleChange]);
 
   return (

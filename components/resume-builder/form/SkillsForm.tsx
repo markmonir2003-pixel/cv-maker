@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Trash2, Plus, Zap, FileBadge } from 'lucide-react';
 import { Skill } from '@/types/resume';
+import { compressImage } from '@/lib/image-utils';
 
 const PROFICIENCY_LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
 type ProficiencyLevel = typeof PROFICIENCY_LEVELS[number];
@@ -60,11 +61,12 @@ export function SkillsForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      handleChange(id, 'certificate', reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedBase64 = await compressImage(file);
+      handleChange(id, 'certificate', compressedBase64);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+    }
   }, [handleChange]);
 
   return (
