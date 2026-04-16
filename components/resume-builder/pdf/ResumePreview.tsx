@@ -157,32 +157,38 @@ export function ResumePreview({ data }: Props) {
       style={{
         width: '100%',
         margin: '0 auto',
-        padding: scale < 1 ? '8px 0' : '20px', // Reduce padding on mobile
+        padding: scale < 1 ? '5px' : '20px', 
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        overflowX: 'hidden', // Prevent horizontal scroll
+        overflowX: 'hidden',
       }}
     >
-      {/* ═══ A4 PAPER WRAPPER ═══ */}
+      {/* ═══ SCALING WRAPPER ═══ */}
+      {/* This container takes exactly the space of the scaled document */}
       <div style={{
-        backgroundColor: '#ffffff',
-        width: `${A4_WIDTH_PX}px`,
-        minHeight: `${A4_HEIGHT_PX}px`,
-        margin: '0 auto',
-        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-        display: 'flex',
-        flexDirection: 'row',
+        width: `${A4_WIDTH_PX * scale}px`,
+        height: `${A4_HEIGHT_PX * scale}px`,
         position: 'relative',
-        overflow: 'hidden',
-        boxSizing: 'border-box',
-        // Dynamic scale
-        transform: `scale(${scale})`,
-        transformOrigin: 'top center',
-        // Important: maintain vertical space for scaled content
-        marginBottom: `calc(${A4_HEIGHT_PX}px * (${scale} - 1))`,
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+        backgroundColor: '#ffffff',
       }}>
+        {/* ═══ A4 PAPER (Actual Document) ═══ */}
+        <div style={{
+          width: `${A4_WIDTH_PX}px`,
+          height: `${A4_HEIGHT_PX}px`,
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          backgroundColor: '#ffffff',
+          display: 'flex',
+          flexDirection: 'row',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}>
         
         {/* ═══ LEFT SIDEBAR ═══ */}
         <div style={{
@@ -309,6 +315,7 @@ export function ResumePreview({ data }: Props) {
           )}
         </div>
       </div>
+    </div>
 
       {/* ═══ ATTACHMENTS PREVIEW ═══ */}
       {(pi.graduationCertificate || certSkills.length > 0) && (
