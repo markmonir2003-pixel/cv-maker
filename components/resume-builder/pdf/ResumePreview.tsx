@@ -103,9 +103,16 @@ export function ResumePreview({ data }: Props) {
   React.useEffect(() => {
     const calculateScale = () => {
       if (!containerRef.current) return;
-      const parentWidth = containerRef.current.parentElement?.clientWidth || window.innerWidth;
+      
+      // Use the actual container width instead of window.innerWidth
+      const parent = containerRef.current.parentElement;
+      if (!parent) return;
+
+      const parentWidth = parent.clientWidth;
       const a4Width = 794; // approx 210mm in pixels at 96dpi
-      const padding = 40; // 20px on each side
+      
+      // On mobile (parentWidth < 768), we want almost no padding to maximize space
+      const padding = parentWidth < 768 ? 16 : 40;
       const availableWidth = parentWidth - padding;
       
       if (availableWidth < a4Width) {
@@ -115,9 +122,14 @@ export function ResumePreview({ data }: Props) {
       }
     };
 
-    calculateScale();
+    // Need a slight delay to ensure parent has rendered its true width
+    const timeoutId = setTimeout(calculateScale, 100);
+    
     window.addEventListener('resize', calculateScale);
-    return () => window.removeEventListener('resize', calculateScale);
+    return () => {
+      window.removeEventListener('resize', calculateScale);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   if (!data?.personalInfo) return null;
@@ -134,26 +146,30 @@ export function ResumePreview({ data }: Props) {
 
   const certSkills = skills.filter(s => s.certificate);
 
+  // A4 dimensions in pixels
+  const A4_WIDTH_PX = 794;
+  const A4_HEIGHT_PX = 1123;
+
   return (
     <div 
       ref={containerRef}
       className="resume-preview-container" 
       style={{
         width: '100%',
-        maxWidth: '850px',
         margin: '0 auto',
-        backgroundColor: '#f1f5f9',
-        padding: '20px',
+        padding: scale < 1 ? '8px 0' : '20px', // Reduce padding on mobile
         boxSizing: 'border-box',
-        // Ensure container height adjusts with scaled content
-        minHeight: scale < 1 ? `calc(297mm * ${scale} + 40px)` : 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        overflowX: 'hidden', // Prevent horizontal scroll
       }}
     >
       {/* ═══ A4 PAPER WRAPPER ═══ */}
       <div style={{
         backgroundColor: '#ffffff',
-        width: '210mm',
-        minHeight: '297mm',
+        width: `${A4_WIDTH_PX}px`,
+        minHeight: `${A4_HEIGHT_PX}px`,
         margin: '0 auto',
         boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
         display: 'flex',
@@ -164,8 +180,8 @@ export function ResumePreview({ data }: Props) {
         // Dynamic scale
         transform: `scale(${scale})`,
         transformOrigin: 'top center',
-        // Adjust for the scale shrink in document flow
-        marginBottom: scale < 1 ? `calc(297mm * (${scale} - 1))` : '0',
+        // Important: maintain vertical space for scaled content
+        marginBottom: `calc(${A4_HEIGHT_PX}px * (${scale} - 1))`,
       }}>
         
         {/* ═══ LEFT SIDEBAR ═══ */}

@@ -38,8 +38,7 @@ export function PreviewSection() {
           </div>
         ) : (
           <div
-            className="bg-white shadow-lg rounded-sm mx-auto"
-            style={{ width: '100%', maxWidth: '794px' }}
+            className="w-full h-fit flex justify-center"
             data-resume-preview
           >
             <ResumePreview data={data} />
