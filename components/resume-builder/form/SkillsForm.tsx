@@ -12,9 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, Plus, Zap, FileBadge } from 'lucide-react';
-import { Skill } from '@/types/resume';
-import { compressImage } from '@/lib/image-utils';
+import { Trash2, Plus, FolderKanban, X } from 'lucide-react';
 
 const PROFICIENCY_LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
 type ProficiencyLevel = typeof PROFICIENCY_LEVELS[number];
@@ -31,143 +29,141 @@ function ProficiencyBars({ level }: { level: ProficiencyLevel }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4].map(i => (
-        <div
-          key={i}
-          className={`h-2 w-4 rounded-sm transition-all ${i <= bars ? color : 'bg-muted'}`}
-        />
+        <div key={i} className={`h-2 w-4 rounded-sm transition-all ${i <= bars ? color : 'bg-muted'}`} />
       ))}
     </div>
   );
 }
 
 export function SkillsForm() {
-  const { data, addSkill, updateSkill, removeSkill } = useResume();
-  const { skills } = data;
+  const { data, addSkillCategory, updateSkillCategory, removeSkillCategory } = useResume();
+  const { skillCategories } = data;
 
-  const handleAddSkill = useCallback(() => {
-    addSkill({ name: '', proficiency: 'intermediate', certificate: '' });
-  }, [addSkill]);
+  const handleAddCategory = useCallback(() => {
+    addSkillCategory({ category: '', skills: [{ name: '', proficiency: 'intermediate' }] });
+  }, [addSkillCategory]);
 
-  const handleChange = useCallback(
-    (id: string, field: keyof Omit<Skill, 'id'>, value: string) => {
-      const skill = skills.find(s => s.id === id);
-      if (!skill) return;
-      updateSkill(id, { ...skill, [field]: value });
+  const handleCategoryChange = useCallback(
+    (id: string, field: string, value: any) => {
+      const cat = skillCategories.find(c => c.id === id);
+      if (!cat) return;
+      updateSkillCategory(id, { ...cat, [field]: value });
     },
-    [skills, updateSkill]
+    [skillCategories, updateSkillCategory]
   );
 
-  const handleFileUpload = useCallback(async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleSkillChange = useCallback(
+    (catId: string, skillIdx: number, field: string, value: string) => {
+      const cat = skillCategories.find(c => c.id === catId);
+      if (!cat) return;
+      const skills = [...cat.skills];
+      skills[skillIdx] = { ...skills[skillIdx], [field]: value };
+      handleCategoryChange(catId, 'skills', skills);
+    },
+    [skillCategories, handleCategoryChange]
+  );
 
-    try {
-      const compressedBase64 = await compressImage(file);
-      handleChange(id, 'certificate', compressedBase64);
-    } catch (error) {
-      console.error('Error compressing image:', error);
-    }
-  }, [handleChange]);
+  const addSkill = useCallback((catId: string) => {
+    const cat = skillCategories.find(c => c.id === catId);
+    if (!cat) return;
+    handleCategoryChange(catId, 'skills', [...cat.skills, { name: '', proficiency: 'intermediate' as const }]);
+  }, [skillCategories, handleCategoryChange]);
+
+  const removeSkill = useCallback((catId: string, skillIdx: number) => {
+    const cat = skillCategories.find(c => c.id === catId);
+    if (!cat) return;
+    const skills = cat.skills.filter((_, i) => i !== skillIdx);
+    handleCategoryChange(catId, 'skills', skills.length > 0 ? skills : [{ name: '', proficiency: 'intermediate' as const }]);
+  }, [skillCategories, handleCategoryChange]);
 
   return (
-    <div className="space-y-3">
-      {skills.length === 0 && (
+    <div className="space-y-4">
+      {skillCategories.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 gap-3 text-muted-foreground border-2 border-dashed rounded-lg">
-          <Zap className="w-8 h-8 text-muted-foreground/40" />
-          <p className="text-sm">No skills added yet</p>
+          <FolderKanban className="w-8 h-8 text-muted-foreground/40" />
+          <p className="text-sm">No skill categories added yet</p>
+          <p className="text-xs text-muted-foreground/60">Organize skills by category (e.g., Technical, Analytical, Creative)</p>
         </div>
       )}
 
-      <div className="space-y-2">
-        {skills.map(skill => (
-          <div
-            key={skill.id}
-            className="border rounded-xl p-4 space-y-3 bg-muted/20 hover:bg-muted/30 transition-colors"
-          >
-            <div className="flex gap-3 items-end">
-              {/* Skill Name */}
-              <div className="flex-1 min-w-0 space-y-1.5">
-                <Label htmlFor={`skill-name-${skill.id}`} className="text-xs font-semibold">
-                  Skill
-                </Label>
-                <Input
-                  id={`skill-name-${skill.id}`}
-                  value={skill.name}
-                  onChange={e => handleChange(skill.id, 'name', e.target.value)}
-                  placeholder="e.g. React, Python…"
-                />
-              </div>
-
-              {/* Proficiency */}
-              <div className="w-36 space-y-1.5 shrink-0">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={`proficiency-${skill.id}`} className="text-xs font-semibold">
-                    Level
-                  </Label>
-                  <ProficiencyBars level={skill.proficiency} />
-                </div>
-                <Select
-                  value={skill.proficiency}
-                  onValueChange={value => handleChange(skill.id, 'proficiency', value as any)}
-                >
-                  <SelectTrigger id={`proficiency-${skill.id}`}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROFICIENCY_LEVELS.map(level => (
-                      <SelectItem key={level} value={level}>
-                        {proficiencyConfig[level].label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Remove */}
-              <button
-                onClick={() => removeSkill(skill.id)}
-                className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors mb-0.5"
-                aria-label="Remove skill"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Certificate */}
-            <div className="space-y-1.5">
-              <Label htmlFor={`certificate-${skill.id}`} className="flex items-center gap-1.5 text-xs font-semibold">
-                <FileBadge className="w-3.5 h-3.5 text-muted-foreground" />
-                Course Certificate <span className="font-normal text-muted-foreground">(optional, if accredited)</span>
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`certificate-${skill.id}`}
-                  type="file"
-                  accept="image/*"
-                  onChange={e => handleFileUpload(skill.id, e)}
-                  className="cursor-pointer file:cursor-pointer flex-1"
-                />
-                {skill.certificate && (
-                  <p className="text-[10px] text-green-600 font-medium shrink-0">Uploaded</p>
-                )}
-              </div>
-            </div>
+      {skillCategories.map((cat, catIdx) => (
+        <div key={cat.id} className="border rounded-xl p-4 space-y-3 bg-muted/20 hover:bg-muted/30 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Category #{catIdx + 1}
+            </span>
+            <button
+              onClick={() => removeSkillCategory(cat.id)}
+              className="text-destructive hover:bg-destructive/10 p-1.5 rounded-md transition-colors"
+              aria-label="Remove category"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
           </div>
-        ))}
-      </div>
 
-      <Button
-        onClick={handleAddSkill}
-        variant="outline"
-        className="w-full gap-2 border-dashed"
-      >
-        <Plus className="w-4 h-4" />
-        Add Skill
+          <div className="space-y-1.5">
+            <Label htmlFor={`cat-name-${cat.id}`} className="text-xs font-semibold">Category Name</Label>
+            <Input
+              id={`cat-name-${cat.id}`}
+              value={cat.category}
+              onChange={e => handleCategoryChange(cat.id, 'category', e.target.value)}
+              placeholder="e.g., Technical Skills, Analytical Skills, Creative Skills"
+            />
+          </div>
+
+          <div className="space-y-2 pl-2 border-l-2 border-muted">
+            <Label className="text-xs font-semibold text-muted-foreground">Skills</Label>
+            {cat.skills.map((skill, sIdx) => (
+              <div key={sIdx} className="flex gap-2 items-end">
+                <div className="flex-1 space-y-1">
+                  <Input
+                    value={skill.name}
+                    onChange={e => handleSkillChange(cat.id, sIdx, 'name', e.target.value)}
+                    placeholder="e.g., Meta Ads Manager"
+                    className="text-sm"
+                  />
+                </div>
+                <div className="w-32 space-y-1 shrink-0">
+                  <div className="flex items-center justify-end">
+                    <ProficiencyBars level={skill.proficiency} />
+                  </div>
+                  <Select
+                    value={skill.proficiency}
+                    onValueChange={value => handleSkillChange(cat.id, sIdx, 'proficiency', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROFICIENCY_LEVELS.map(level => (
+                        <SelectItem key={level} value={level}>{proficiencyConfig[level].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <button
+                  onClick={() => removeSkill(cat.id, sIdx)}
+                  className="text-muted-foreground hover:text-destructive p-1.5 rounded-md transition-colors mb-0.5"
+                  aria-label="Remove skill"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            <Button onClick={() => addSkill(cat.id)} variant="ghost" size="sm" className="gap-1 text-xs h-7">
+              <Plus className="w-3 h-3" /> Add skill
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      <Button onClick={handleAddCategory} variant="outline" className="w-full gap-2 border-dashed">
+        <Plus className="w-4 h-4" /> Add Skill Category
       </Button>
 
-      {skills.length > 0 && (
+      {skillCategories.length > 0 && (
         <p className="text-xs text-muted-foreground text-center">
-          {skills.length} skill{skills.length !== 1 ? 's' : ''} added
+          {skillCategories.reduce((s, c) => s + c.skills.length, 0)} skill{skillCategories.reduce((s, c) => s + c.skills.length, 0) !== 1 ? 's' : ''} in {skillCategories.length} categor{skillCategories.length !== 1 ? 'ies' : 'y'}
         </p>
       )}
     </div>

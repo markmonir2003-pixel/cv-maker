@@ -3,8 +3,6 @@
 import React from 'react';
 import { ResumeData } from '@/types/resume';
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 function formatDate(s: string): string {
   if (!s) return '';
   try {
@@ -27,40 +25,16 @@ function isArabic(text: string): boolean {
   return arabicPattern.test(text || '');
 }
 
-function getDirStyle(text: string): React.CSSProperties {
-  return isArabic(text) ? { textAlign: 'right', direction: 'rtl' } : { textAlign: 'left' };
+function rtlStyle(text: string): React.CSSProperties {
+  return isArabic(text) ? { textAlign: 'right' } : {};
 }
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-
-const PROF_PCT: Record<string, string> = {
-  beginner: '30%',
-  intermediate: '60%',
-  advanced: '85%',
-  expert: '100%',
-};
-
-// ─── Components ─────────────────────────────────────────────────────────────
-
-function Skill({ name, proficiency }: { name: string; proficiency: string }) {
+function BulletItem({ text }: { text: string }) {
   return (
-    <div style={{ marginBottom: '12px' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        marginBottom: '4px',
-        ...getDirStyle(name)
-      }}>
-        <span style={{ fontSize: '9.5px', fontWeight: 700, color: '#ffffff' }}>{name}</span>
-      </div>
-      <div style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-        <div style={{ 
-          height: '100%', 
-          width: PROF_PCT[proficiency] || '50%', 
-          backgroundColor: '#818cf8',
-          borderRadius: '2px',
-          transition: 'width 0.5s ease'
-        }} />
+    <div style={{ paddingBottom: '1px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <span style={{ fontSize: '9px', color: '#475569', width: '10px', flexShrink: 0 }}>-</span>
+        <span style={{ fontSize: '8.5px', color: '#475569', flex: 1, ...rtlStyle(text) }}>{text}</span>
       </div>
     </div>
   );
@@ -68,31 +42,21 @@ function Skill({ name, proficiency }: { name: string; proficiency: string }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: '28px' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '10px', 
-        marginBottom: '16px',
-        borderBottom: '2px solid #eef2ff',
-        paddingBottom: '8px'
+    <div style={{ paddingBottom: '10px' }}>
+      <div style={{
+        borderBottom: '1px solid #e2e8f0',
+        paddingBottom: '2px',
+        paddingTop: '8px',
       }}>
-        <div style={{ width: '4px', height: '16px', backgroundColor: '#4f46e5', borderRadius: '2px' }} />
-        <h2 style={{ 
-          fontSize: '11px', 
-          fontWeight: 800, 
-          color: '#0f172a', 
-          textTransform: 'uppercase', 
-          letterSpacing: '0.12em',
-          margin: 0
+        <h2 style={{
+          fontSize: '9px', fontWeight: 800, color: '#1e293b',
+          textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0,
         }}>{title}</h2>
       </div>
       {children}
     </div>
   );
 }
-
-// ─── Main Preview ─────────────────────────────────────────────────────────────
 
 interface Props { data: ResumeData; }
 
@@ -103,258 +67,246 @@ export function ResumePreview({ data }: Props) {
   React.useEffect(() => {
     const calculateScale = () => {
       if (!containerRef.current) return;
-      
-      // Use the actual container width instead of window.innerWidth
       const parent = containerRef.current.parentElement;
       if (!parent) return;
-
       const parentWidth = parent.clientWidth;
-      const a4Width = 794; // approx 210mm in pixels at 96dpi
-      
-      // On mobile (parentWidth < 768), we want almost no padding to maximize space
+      const a4Width = 794;
       const padding = parentWidth < 768 ? 16 : 40;
       const availableWidth = parentWidth - padding;
-      
-      if (availableWidth < a4Width) {
-        setScale(availableWidth / a4Width);
-      } else {
-        setScale(1);
-      }
+      setScale(availableWidth < a4Width ? availableWidth / a4Width : 1);
     };
-
-    // Need a slight delay to ensure parent has rendered its true width
     const timeoutId = setTimeout(calculateScale, 100);
-    
     window.addEventListener('resize', calculateScale);
-    return () => {
-      window.removeEventListener('resize', calculateScale);
-      clearTimeout(timeoutId);
-    };
+    return () => { window.removeEventListener('resize', calculateScale); clearTimeout(timeoutId); };
   }, []);
 
   if (!data?.personalInfo) return null;
 
-  const { personalInfo: pi, experiences, educations, skills } = data;
+  const { personalInfo, experiences, educations, skillCategories, projects, certifications, languages } = data;
 
-  const contacts = [
-    pi.email && { icon: '✉', text: pi.email },
-    pi.phone && { icon: '✆', text: pi.phone },
-    pi.location && { icon: '⌖', text: pi.location },
-    pi.linkedin && { icon: 'in', text: pi.linkedin },
-    pi.website && { icon: '⌂', text: pi.website },
-  ].filter(Boolean) as { icon: string; text: string }[];
+  const contactParts: string[] = [];
+  if (personalInfo.email) contactParts.push(personalInfo.email);
+  if (personalInfo.phone) contactParts.push(personalInfo.phone);
+  if (personalInfo.location) contactParts.push(personalInfo.location);
+  if (personalInfo.linkedin) contactParts.push(personalInfo.linkedin);
 
-  const certSkills = skills.filter(s => s.certificate);
-
-  // A4 dimensions in pixels
-  const A4_WIDTH_PX = 794;
-  const A4_HEIGHT_PX = 1123;
+  const A4_WIDTH = 794;
 
   return (
-    <div 
-      ref={containerRef}
-      className="resume-preview-container" 
-      style={{
-        width: '100%',
-        margin: '0 auto',
-        padding: scale < 1 ? '5px' : '20px', 
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        overflowX: 'hidden',
-      }}
-    >
-      {/* ═══ SCALING WRAPPER ═══ */}
-      {/* This container takes exactly the space of the scaled document */}
+    <div ref={containerRef} style={{
+      width: '100%', margin: '0 auto', padding: scale < 1 ? '5px' : '20px',
+      boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center',
+    }}>
       <div style={{
-        width: `${A4_WIDTH_PX * scale}px`,
-        height: `${A4_HEIGHT_PX * scale}px`,
+        width: `${A4_WIDTH * scale}px`,
+        height: `${1293 * scale}px`,
         position: 'relative',
         boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
         backgroundColor: '#ffffff',
       }}>
-        {/* ═══ A4 PAPER (Actual Document) ═══ */}
         <div style={{
-          width: `${A4_WIDTH_PX}px`,
-          height: `${A4_HEIGHT_PX}px`,
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          backgroundColor: '#ffffff',
-          display: 'flex',
-          flexDirection: 'row',
-          overflow: 'hidden',
-          boxSizing: 'border-box',
-          transform: `scale(${scale})`,
-          transformOrigin: 'top left',
+          width: `${A4_WIDTH}px`, height: '1293px', position: 'absolute', top: 0, left: 0,
+          backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          boxSizing: 'border-box', transform: `scale(${scale})`, transformOrigin: 'top left',
+          padding: '24px 36px', fontSize: '9px', color: '#1e293b',
         }}>
-        
-        {/* ═══ LEFT SIDEBAR ═══ */}
-        <div style={{
-          width: '32%',
-          backgroundColor: '#1e1b4b',
-          color: '#ffffff',
-          padding: '40px 20px',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-        }}>
-          {/* Photo */}
-          <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            backgroundColor: '#4f46e5',
-            alignSelf: 'center',
-            marginBottom: '24px',
-            border: '3px solid rgba(255,255,255,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            {pi.photo ? (
-              <img src={pi.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ fontSize: '36px', color: '#a5b4fc', fontWeight: 800 }}>
-                {(pi.fullName || '?')[0].toUpperCase()}
-              </span>
-            )}
-          </div>
 
-          {/* Contact */}
-          {contacts.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h3 style={{ fontSize: '9px', fontWeight: 800, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>Contact</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {contacts.map((c, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '10px', color: '#a5b4fc', width: '14px', textAlign: 'center' }}>{c.icon}</span>
-                    <span style={{ fontSize: '8.5px', color: '#e0e7ff', flex: 1, wordBreak: 'break-all', ...getDirStyle(c.text) }}>{c.text}</span>
+          {/* ═══ HEADER ═══ */}
+          <div style={{ flexDirection: 'column', paddingBottom: '10px', borderBottom: '2px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', flexDirection: 'row' }}>
+              {personalInfo.photo && (
+                <div style={{ width: '56px', flexShrink: 0 }}>
+                  <div style={{
+                    width: '48px', height: '48px', borderRadius: '24px', overflow: 'hidden',
+                    backgroundColor: '#e2e8f0',
+                  }}>
+                    <img src={personalInfo.photo} alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                </div>
+              )}
+              <div style={{ flex: 1 }}>
+                <div style={{ paddingBottom: '2px' }}>
+                  <h1 style={{ fontSize: '20px', fontWeight: 900, color: '#1e293b', margin: 0, ...rtlStyle(personalInfo.fullName) }}>
+                    {personalInfo.fullName || 'Your Name'}
+                  </h1>
+                </div>
+                {personalInfo.title && (
+                  <div style={{ paddingBottom: '2px' }}>
+                    <p style={{ fontSize: '11px', fontWeight: 700, color: '#2563eb', margin: 0, ...rtlStyle(personalInfo.title) }}>
+                      {personalInfo.title}
+                    </p>
+                  </div>
+                )}
+                {contactParts.map((part, i) => (
+                  <div key={i} style={{ paddingBottom: '2px' }}>
+                    <p style={{ fontSize: '8px', color: '#475569', margin: 0, ...rtlStyle(part) }}>{part}</p>
                   </div>
                 ))}
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Skills */}
-          {skills.length > 0 && (
-            <div>
-              <h3 style={{ fontSize: '9px', fontWeight: 800, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>Skills</h3>
-              {skills.map(s => <Skill key={s.id} name={s.name} proficiency={s.proficiency} />)}
-            </div>
-          )}
-        </div>
-
-        {/* ═══ RIGHT MAIN CONTENT ═══ */}
-        <div style={{
-          flex: 1,
-          padding: '40px 32px',
-          backgroundColor: '#ffffff',
-          minWidth: 0,
-        }}>
-          {/* Header */}
-          <div style={{ marginBottom: '36px' }}>
-            <h1 style={{ fontSize: '30px', fontWeight: 900, color: '#0f172a', margin: '0 0 6px', ...getDirStyle(pi.fullName) }}>
-              {pi.fullName || 'Your Name'}
-            </h1>
-            {pi.title && (
-              <p style={{ fontSize: '14px', fontWeight: 700, color: '#4f46e5', margin: 0, letterSpacing: '0.02em', ...getDirStyle(pi.title) }}>
-                {pi.title}
+          {/* ═══ PROFESSIONAL SUMMARY ═══ */}
+          {personalInfo.professionalSummary && (
+            <Section title="Professional Summary">
+              <div style={{ paddingBottom: '1px' }} />
+              <p style={{ fontSize: '8.5px', color: '#475569', margin: 0, ...rtlStyle(personalInfo.professionalSummary) }}>
+                {personalInfo.professionalSummary}
               </p>
-            )}
-          </div>
-
-          {/* Education */}
-          {educations.length > 0 && (
-            <Section title="Education">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                {educations.map(edu => (
-                  <div key={edu.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b', flex: 1, ...getDirStyle(edu.degree) }}>
-                        {[edu.degree, edu.field].filter(Boolean).join(' in ') || 'Degree'}
-                      </span>
-                      <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#4f46e5', backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-                        {formatDate(edu.graduationDate)}
-                      </span>
-                    </div>
-                    {edu.school && <p style={{ fontSize: '10px', fontWeight: 600, color: '#4f46e5', margin: 0, ...getDirStyle(edu.school) }}>{edu.school}</p>}
-                  </div>
-                ))}
-              </div>
             </Section>
           )}
 
-          {/* Experience */}
+          {/* ═══ SKILLS ═══ */}
+          {skillCategories.length > 0 && (
+            <Section title="Skills">
+              {skillCategories.map(cat => (
+                <div key={cat.id} style={{ display: 'flex', flexDirection: 'row', paddingBottom: '1px' }}>
+                  {cat.category && (
+                    <span style={{ fontSize: '8px', fontWeight: 700, color: '#1e293b', width: '80px', flexShrink: 0, ...rtlStyle(cat.category) }}>
+                      {cat.category}
+                    </span>
+                  )}
+                  <span style={{ fontSize: '8px', color: '#475569', ...rtlStyle(cat.skills.map(s => s.name).join(', ')) }}>
+                    {cat.skills.map(s => s.name).join(', ')}
+                  </span>
+                </div>
+              ))}
+            </Section>
+          )}
+
+          {/* ═══ EXPERIENCE ═══ */}
           {experiences.length > 0 && (
             <Section title="Experience">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {experiences.map(exp => (
-                  <div key={exp.id}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: '#1e293b', flex: 1, ...getDirStyle(exp.position) }}>
-                        {exp.position || 'Position'}
-                      </span>
-                      <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#4f46e5', backgroundColor: '#eef2ff', padding: '3px 8px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-                        {formatRange(exp.startDate, exp.endDate, exp.currentlyWorking)}
-                      </span>
-                    </div>
-                    {exp.company && <p style={{ fontSize: '10px', fontWeight: 600, color: '#4f46e5', margin: '0 0 8px', ...getDirStyle(exp.company) }}>{exp.company}</p>}
-                    {exp.description && (
-                      <div style={{ fontSize: '9.5px', color: '#475569', lineHeight: 1.6, ...getDirStyle(exp.description) }}>
-                        {exp.description}
-                      </div>
-                    )}
+              {experiences.map(exp => (
+                <div key={exp.id} style={{ paddingBottom: '5px' }}>
+                  <div style={{ paddingBottom: '1px' }} />
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '9px', fontWeight: 800, color: '#1e293b', margin: 0, ...rtlStyle(exp.position) }}>
+                      {exp.position || 'Position'}
+                    </p>
                   </div>
-                ))}
-              </div>
+                  {exp.company && (
+                    <div style={{ paddingBottom: '1px' }}>
+                      <p style={{ fontSize: '8.5px', fontWeight: 600, color: '#2563eb', margin: 0, ...rtlStyle(exp.company) }}>
+                        {exp.company}
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '7.5px', color: '#94a3b8', margin: 0 }}>
+                      {formatRange(exp.startDate, exp.endDate, exp.currentlyWorking)}
+                    </p>
+                  </div>
+                  {exp.bullets.filter(b => b.trim()).length > 0 && (
+                    <div>
+                      {exp.bullets.filter(b => b.trim()).map((b, i) => (
+                        <BulletItem key={i} text={b} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </Section>
           )}
+
+          {/* ═══ PROJECTS ═══ */}
+          {projects.length > 0 && (
+            <Section title="Projects">
+              {projects.map(proj => (
+                <div key={proj.id} style={{ paddingBottom: '5px' }}>
+                  <div style={{ paddingBottom: '1px' }} />
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '9px', fontWeight: 800, color: '#1e293b', margin: 0, ...rtlStyle(proj.name) }}>
+                      {proj.name || 'Project'}
+                    </p>
+                  </div>
+                  {proj.role && (
+                    <div style={{ paddingBottom: '1px' }}>
+                      <p style={{ fontSize: '8.5px', fontWeight: 600, color: '#2563eb', margin: 0, ...rtlStyle(proj.role) }}>
+                        {proj.role}
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '7.5px', color: '#94a3b8', margin: 0 }}>
+                      {formatRange(proj.startDate, proj.endDate, proj.currentlyWorking)}
+                    </p>
+                  </div>
+                  {proj.bullets.filter(b => b.trim()).length > 0 && (
+                    <div>
+                      {proj.bullets.filter(b => b.trim()).map((b, i) => (
+                        <BulletItem key={i} text={b} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </Section>
+          )}
+
+          {/* ═══ EDUCATION ═══ */}
+          {educations.length > 0 && (
+            <Section title="Education">
+              {educations.map(edu => (
+                <div key={edu.id} style={{ paddingBottom: '5px' }}>
+                  <div style={{ paddingBottom: '1px' }} />
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '9px', fontWeight: 800, color: '#1e293b', margin: 0, ...rtlStyle(edu.degree) }}>
+                      {[edu.degree, edu.field].filter(Boolean).join(' in ') || 'Degree'}
+                    </p>
+                  </div>
+                  {edu.school && (
+                    <div style={{ paddingBottom: '1px' }}>
+                      <p style={{ fontSize: '8.5px', fontWeight: 600, color: '#2563eb', margin: 0, ...rtlStyle(edu.school) }}>
+                        {edu.school}
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '7.5px', color: '#94a3b8', margin: 0 }}>{formatDate(edu.graduationDate)}</p>
+                  </div>
+                </div>
+              ))}
+            </Section>
+          )}
+
+          {/* ═══ CERTIFICATIONS ═══ */}
+          {certifications.length > 0 && (
+            <Section title="Certifications">
+              {certifications.map(cert => (
+                <div key={cert.id} style={{ paddingBottom: '4px' }}>
+                  <div style={{ paddingBottom: '1px' }} />
+                  <div style={{ paddingBottom: '1px' }}>
+                    <p style={{ fontSize: '8.5px', fontWeight: 700, color: '#1e293b', margin: 0, ...rtlStyle(cert.name) }}>{cert.name}</p>
+                  </div>
+                  <p style={{ fontSize: '8px', color: '#475569', margin: 0 }}>
+                    {[cert.issuer, cert.date ? formatDate(cert.date) : ''].filter(Boolean).join(' - ')}
+                  </p>
+                </div>
+              ))}
+            </Section>
+          )}
+
+          {/* ═══ LANGUAGES ═══ */}
+          {languages.length > 0 && (
+            <Section title="Languages">
+              {languages.map(lang => (
+                <div key={lang.id}>
+                  <div style={{ paddingBottom: '1px' }} />
+                  <div style={{ display: 'flex', flexDirection: 'row', paddingBottom: '2px' }}>
+                    <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#1e293b', width: '100px', ...rtlStyle(lang.language) }}>
+                      {lang.language}
+                    </span>
+                    <span style={{ fontSize: '8.5px', color: '#475569' }}>{lang.proficiency}</span>
+                  </div>
+                </div>
+              ))}
+            </Section>
+          )}
+
         </div>
       </div>
-    </div>
-
-      {/* ═══ ATTACHMENTS PREVIEW ═══ */}
-      {(pi.graduationCertificate || certSkills.length > 0) && (
-        <div style={{ 
-          marginTop: '40px', 
-          backgroundColor: '#ffffff', 
-          borderRadius: '12px', 
-          padding: '24px',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' 
-        }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: '#4f46e5' }}>📎</span> Attachments & Certificates
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '20px' }}>
-            {/* Graduation */}
-            {pi.graduationCertificate && (
-              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ height: '150px', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
-                  <img src={pi.graduationCertificate} alt="Graduation Certificate" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                <div style={{ padding: '10px', backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: '#1e293b' }}>Graduation Certificate</p>
-                </div>
-              </div>
-            )}
-            {/* Skills */}
-            {certSkills.map(s => (
-              <div key={s.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ height: '150px', backgroundColor: '#f8fafc', overflow: 'hidden' }}>
-                  <img src={s.certificate} alt={`${s.name} Certificate`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                <div style={{ padding: '10px', backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, margin: 0, color: '#1e293b' }}>{s.name} Certificate</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

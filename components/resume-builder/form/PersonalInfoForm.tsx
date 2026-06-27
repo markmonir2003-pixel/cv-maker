@@ -5,7 +5,7 @@ import { useResume } from '@/contexts/ResumeContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MapPin, Briefcase, Linkedin, Globe, Image as ImageIcon, FileBadge } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, Linkedin, Globe, ImageIcon, FileText } from 'lucide-react';
 import { compressImage } from '@/lib/image-utils';
 
 export function PersonalInfoForm() {
@@ -19,13 +19,12 @@ export function PersonalInfoForm() {
     [personalInfo, updatePersonalInfo]
   );
 
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, field: 'photo' | 'graduationCertificate') => {
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const compressedBase64 = await compressImage(file);
-      handleChange(field, compressedBase64);
+      handleChange('photo', compressedBase64);
     } catch (error) {
       console.error('Error compressing image:', error);
     }
@@ -33,7 +32,6 @@ export function PersonalInfoForm() {
 
   return (
     <div className="space-y-4">
-      {/* Name + Title row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="fullName" className="flex items-center gap-1.5 text-xs font-semibold">
@@ -47,7 +45,6 @@ export function PersonalInfoForm() {
             placeholder="John Doe"
           />
         </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="title" className="flex items-center gap-1.5 text-xs font-semibold">
             <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
@@ -62,7 +59,6 @@ export function PersonalInfoForm() {
         </div>
       </div>
 
-      {/* Email + Phone row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="flex items-center gap-1.5 text-xs font-semibold">
@@ -77,7 +73,6 @@ export function PersonalInfoForm() {
             placeholder="john@example.com"
           />
         </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="phone" className="flex items-center gap-1.5 text-xs font-semibold">
             <Phone className="w-3.5 h-3.5 text-muted-foreground" />
@@ -93,7 +88,6 @@ export function PersonalInfoForm() {
         </div>
       </div>
 
-      {/* Location + LinkedIn row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="location" className="flex items-center gap-1.5 text-xs font-semibold">
@@ -107,7 +101,6 @@ export function PersonalInfoForm() {
             placeholder="San Francisco, CA"
           />
         </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="linkedin" className="flex items-center gap-1.5 text-xs font-semibold">
             <Linkedin className="w-3.5 h-3.5 text-muted-foreground" />
@@ -122,7 +115,6 @@ export function PersonalInfoForm() {
         </div>
       </div>
 
-      {/* Website */}
       <div className="space-y-1.5">
         <Label htmlFor="website" className="flex items-center gap-1.5 text-xs font-semibold">
           <Globe className="w-3.5 h-3.5 text-muted-foreground" />
@@ -136,41 +128,38 @@ export function PersonalInfoForm() {
         />
       </div>
 
-      {/* Uploads */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="photo" className="flex items-center gap-1.5 text-xs font-semibold">
-            <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
-            Profile Photo <span className="font-normal text-muted-foreground">(optional)</span>
-          </Label>
-          <Input
-            id="photo"
-            type="file"
-            accept="image/*"
-            onChange={e => handleFileUpload(e, 'photo')}
-            className="cursor-pointer file:cursor-pointer"
-          />
-          {personalInfo.photo && (
-            <p className="text-[10px] text-green-600 font-medium">Photo uploaded successfully.</p>
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="professionalSummary" className="flex items-center gap-1.5 text-xs font-semibold">
+          <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+          Professional Summary
+        </Label>
+        <Textarea
+          id="professionalSummary"
+          value={personalInfo.professionalSummary}
+          onChange={e => handleChange('professionalSummary', e.target.value)}
+          placeholder="Results-driven marketing professional with 5+ years of experience in digital campaign management and media buying. Skilled in audience targeting, budget optimization, and performance analysis."
+          className="min-h-[100px] resize-none text-sm"
+        />
+        <p className="text-[10px] text-muted-foreground/60 italic">
+          Write 2-4 sentences highlighting your key achievements, skills, and career goals in an active professional tone
+        </p>
+      </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="graduationCertificate" className="flex items-center gap-1.5 text-xs font-semibold">
-            <FileBadge className="w-3.5 h-3.5 text-muted-foreground" />
-            Graduation Certificate <span className="font-normal text-muted-foreground">(optional)</span>
-          </Label>
-          <Input
-            id="graduationCertificate"
-            type="file"
-            accept="image/*"
-            onChange={e => handleFileUpload(e, 'graduationCertificate')}
-            className="cursor-pointer file:cursor-pointer"
-          />
-          {personalInfo.graduationCertificate && (
-            <p className="text-[10px] text-green-600 font-medium">Certificate uploaded successfully.</p>
-          )}
-        </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="photo" className="flex items-center gap-1.5 text-xs font-semibold">
+          <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+          Profile Photo <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          id="photo"
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="cursor-pointer file:cursor-pointer"
+        />
+        {personalInfo.photo && (
+          <p className="text-[10px] text-green-600 font-medium">Photo uploaded successfully.</p>
+        )}
       </div>
     </div>
   );

@@ -7,7 +7,12 @@ import { useDownloadResume } from './DownloadButton';
 import { FormSection } from './FormSection';
 import { PreviewSection } from './PreviewSection';
 import { Button } from '@/components/ui/button';
-import { FileText, Trash2, Eye, EyeOff } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,15 +24,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { FileText, Trash2, Eye, EyeOff, Download, FileJson } from 'lucide-react';
 
 export function ResumeBuilder() {
-  const downloadResume = useDownloadResume();
+  const { downloadResume, downloadJson } = useDownloadResume();
   const { clearAll } = useResume();
   const [showPreview, setShowPreview] = useState(true);
 
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Top Header Bar */}
       <header className="flex items-center justify-between px-3 md:px-6 py-2 md:py-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-20">
         <div className="flex items-center gap-2 md:gap-2.5">
           <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
@@ -42,7 +47,25 @@ export function ResumeBuilder() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Mobile: Toggle preview */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5 hidden sm:flex">
+                <Download className="w-4 h-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={downloadResume}>
+                <Download className="w-4 h-4 mr-2" />
+                Download PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={downloadJson}>
+                <FileJson className="w-4 h-4 mr-2" />
+                Export JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant="ghost"
             size="sm"
@@ -53,7 +76,6 @@ export function ResumeBuilder() {
             {showPreview ? 'Make your CV' : 'Preview'}
           </Button>
 
-          {/* Clear all data */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
@@ -70,10 +92,7 @@ export function ResumeBuilder() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={clearAll}
-                  className="bg-red-600 text-white hover:bg-red-700"
-                >
+                <AlertDialogAction onClick={clearAll} className="bg-red-600 text-white hover:bg-red-700">
                   Clear All
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -82,14 +101,11 @@ export function ResumeBuilder() {
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Form Panel */}
         <AnimatePresence>
           {(!showPreview || true) && (
             <motion.div
-              className={`border-r overflow-hidden flex-shrink-0 ${showPreview ? 'hidden md:flex md:w-1/2' : 'flex w-full'
-                } flex-col`}
+              className={`border-r overflow-hidden flex-shrink-0 ${showPreview ? 'hidden md:flex md:w-1/2' : 'flex w-full'} flex-col`}
               initial={false}
             >
               <FormSection onDownload={downloadResume} />
@@ -97,12 +113,10 @@ export function ResumeBuilder() {
           )}
         </AnimatePresence>
 
-        {/* Preview Panel */}
         <AnimatePresence>
           {(showPreview || true) && (
             <motion.div
-              className={`overflow-hidden flex-1 ${showPreview ? 'flex' : 'hidden md:flex'
-                } flex-col`}
+              className={`overflow-hidden flex-1 ${showPreview ? 'flex' : 'hidden md:flex'} flex-col`}
               initial={false}
             >
               <PreviewSection />

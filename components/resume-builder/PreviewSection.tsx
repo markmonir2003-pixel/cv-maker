@@ -2,6 +2,7 @@
 
 import { useResume } from '@/contexts/ResumeContext';
 import { ResumePreview } from './pdf/ResumePreview';
+import { AtsScorePanel, AtsSuggestionsPanel } from './AtsScorePanel';
 
 export function PreviewSection() {
   const { data } = useResume();
@@ -10,11 +11,10 @@ export function PreviewSection() {
     !data.personalInfo.fullName &&
     data.experiences.length === 0 &&
     data.educations.length === 0 &&
-    data.skills.length === 0;
+    data.skillCategories.length === 0;
 
   return (
     <div className="bg-muted/50 flex flex-col h-full">
-      {/* Section header */}
       <div className="px-5 py-3 border-b bg-background/80 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Live Preview
@@ -22,8 +22,7 @@ export function PreviewSection() {
         <span className="text-xs text-muted-foreground/60">A4 Format</span>
       </div>
 
-      {/* Preview area */}
-      <div className="flex-1 overflow-auto p-4 md:p-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6 space-y-4">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full text-center gap-3 text-muted-foreground py-12">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
@@ -37,12 +36,16 @@ export function PreviewSection() {
             </div>
           </div>
         ) : (
-          <div
-            className="w-full h-fit flex justify-center"
-            data-resume-preview
-          >
-            <ResumePreview data={data} />
-          </div>
+          <>
+            <div className="w-full h-fit flex justify-center" data-resume-preview>
+              <ResumePreview data={data} />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <AtsScorePanel />
+              <AtsSuggestionsPanel />
+            </div>
+          </>
         )}
       </div>
     </div>

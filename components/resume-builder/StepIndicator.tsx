@@ -7,7 +7,7 @@ interface StepIndicatorProps {
   totalSteps: number;
 }
 
-const steps = ['Personal', 'Education', 'Experience', 'Skills'];
+const steps = ['Personal', 'Education', 'Experience', 'Projects', 'Skills', 'Certificates', 'Languages'];
 
 export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   const { setCurrentStep } = useResume();
@@ -21,8 +21,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
 
         return (
           <React.Fragment key={index}>
-            {/* Step circle */}
-            <div 
+            <div
               className="flex flex-col items-center gap-1 cursor-pointer group"
               onClick={() => setCurrentStep(stepNumber)}
             >
@@ -44,7 +43,6 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
               </span>
             </div>
 
-            {/* Connector line */}
             {index < totalSteps - 1 && (
               <div
                 className={`flex-1 h-0.5 mb-4 transition-all duration-500 ${isCompleted ? 'bg-primary' : 'bg-muted'
